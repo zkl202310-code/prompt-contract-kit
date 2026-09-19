@@ -1,0 +1,10 @@
+# 私有输入与全部生成产物——不随库发布（注意：手工打包上传时 .gitignore 不起作用，请自行排除）
+eval/runs/
+eval/results/
+eval/.sandbox/
+eval/tasks_v1.jsonl
+eval/live_record.md
+_review/
+__pycache__/
+*.pyc
+.DS_Store
