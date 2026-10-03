@@ -170,9 +170,24 @@ def strip_fence(s):
     if s.startswith("```"): s = re.sub(r"^```[^\n]*\n", "", s); s = re.sub(r"\n```\s*$", "", s)
     return s.strip()
 
+def restore_optimized_prompt(out):
+    """Recover the derived prompt from a successful result, without a model call."""
+    result = out / "result.json"
+    if not result.exists(): return False
+    rec = json.loads(result.read_text())
+    if rec.get("failed") or rec.get("exit", 0) != 0: return False
+    text = strip_fence(rec.get("output") or "")
+    if not text: return False
+    prompt = out / "optimized_prompt.md"
+    try: current = prompt.read_text()
+    except (FileNotFoundError, UnicodeDecodeError): current = None  # 中断写入可能截断 UTF-8 字符
+    if current != text:
+        safe_write(prompt, text)
+    return True
+
 def phase_optimize(t, cond):
     out = safe_child(RUNS, t["id"], f"opt_{cond}")
-    if (out / "result.json").exists() and not json.loads((out/"result.json").read_text()).get("failed"): return
+    if restore_optimized_prompt(out): return
     prompt = WRAPPER + OPT[cond].read_text() + "\n\n---\n\n用户的原始任务如下（含其附带材料，原样）：\n\n" + raw_task_prompt(t)
     rec = codex_run(prompt, CFG["exec_model"], CFG["exec_effort"], out, wrapper_cmd=CFG["exec_cmd"])
     safe_write(out / "optimized_prompt.md", strip_fence(rec["output"]))
@@ -181,7 +196,10 @@ def phase_execute(t, cond):
     out = safe_child(RUNS, t["id"], f"exec_{cond}")
     if (out / "result.json").exists() and not json.loads((out/"result.json").read_text()).get("failed"): return
     if cond == "A": prompt = WRAPPER + raw_task_prompt(t)
-    else: prompt = WRAPPER + (RUNS / t["id"] / f"opt_{cond}" / "optimized_prompt.md").read_text()
+    else:
+        opt = safe_child(RUNS, t["id"], f"opt_{cond}")
+        if not restore_optimized_prompt(opt): raise RuntimeError(f"optimization missing or failed, not executing: {opt}")
+        prompt = WRAPPER + (opt / "optimized_prompt.md").read_text()
     codex_run(prompt, CFG["exec_model"], CFG["exec_effort"], out, wrapper_cmd=CFG["exec_cmd"])
 
 def phase_judge(t, pair):  # pair like "AB" or "BC"
@@ -272,7 +290,7 @@ def aggregate(tasks):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tasks", default="")
+    ap.add_argument("--tasks", default="", help="只执行指定题目；汇总始终覆盖完整任务集")
     ap.add_argument("--phase", default="all", choices=["optimize", "execute", "judge", "aggregate", "all"])
     ap.add_argument("--workers", type=int, default=2, help="作者环境下 OpenAI 侧 >3 并发出现过 403，默认 2")
     ap.add_argument("--variant", default="sol_medium", choices=list(VARIANTS))
@@ -309,7 +327,8 @@ def main():
             if not dst.exists(): shutil.copytree(src, dst, symlinks=False)
         safe_write(RUNS / "README_A_reuse.md", f"exec_A 复制自 {V['reuseA']}（已核对执行模型、档位、包装、任务文件一致），未重新调用。")
     ids = [x for x in a.tasks.split(",") if x]
-    tasks = load_tasks(ids)
+    all_tasks = load_tasks()
+    tasks = [t for t in all_tasks if not ids or t["id"] in ids]
     SANDBOX.mkdir(exist_ok=True)
     def run_all(jobs, label):
         errs = []
@@ -324,7 +343,7 @@ def main():
     if a.phase in ("optimize", "all"): errs += run_all([(phase_optimize, t, c) for t in tasks for c in conds if c != "A"], "optimize")
     if a.phase in ("execute", "all"): errs += run_all([(phase_execute, t, c) for t in tasks for c in conds], "execute")
     if a.phase in ("judge", "all"): errs += run_all([(phase_judge, t, p) for t in tasks for p in pairs], "judge")
-    if a.phase in ("aggregate", "all"): aggregate(tasks)
+    if a.phase in ("aggregate", "all"): aggregate(all_tasks)
     if errs: print("ERRORS:", len(errs)); sys.exit(1)
 
 if __name__ == "__main__": main()

@@ -31,7 +31,7 @@ def done(d):
 
 def opt_B(t):
     out = E.safe_child(RUNS, t["id"], "opt_B")
-    if done(out): return
+    if E.restore_optimized_prompt(out): return
     prompt = WRAPPER + OPT_B.read_text() + "\n\n---\n\n用户的原始任务如下（含其附带材料，原样）：\n\n" + E.raw_task_prompt(t)
     rec = E.codex_run(prompt, CFG["exec_model"], CFG["exec_effort"], out)
     E.safe_write(out / "optimized_prompt.md", E.strip_fence(rec["output"]))
@@ -40,7 +40,10 @@ def exec_cond(t, cond):
     out = E.safe_child(RUNS, t["id"], f"exec_{cond}")
     if done(out): return
     if cond == "A": prompt = WRAPPER + E.raw_task_prompt(t)
-    elif cond == "B": prompt = WRAPPER + (RUNS / t["id"] / "opt_B" / "optimized_prompt.md").read_text()
+    elif cond == "B":
+        opt = E.safe_child(RUNS, t["id"], "opt_B")
+        if not E.restore_optimized_prompt(opt): raise RuntimeError(f"optimization missing or failed, not executing: {opt}")
+        prompt = WRAPPER + (opt / "optimized_prompt.md").read_text()
     elif cond == "I": prompt = WRAPPER + OPT_I.read_text() + "\n\n---\n\n用户任务：\n\n" + E.raw_task_prompt(t)
     E.codex_run(prompt, CFG["exec_model"], CFG["exec_effort"], out)
 
@@ -122,7 +125,7 @@ def aggregate(tasks):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--tasks", default=""); ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--tasks", default="", help="只执行指定题目；汇总始终覆盖完整任务集"); ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--phase", default="all", choices=["optimize", "execute", "judge", "aggregate", "all"])
     ap.add_argument("--variant", default="astra_inline", choices=list(VARIANTS))
     a = ap.parse_args()
@@ -158,7 +161,9 @@ def main():
             dst = E.safe_child(RUNS, s_.parent.name, "exec_A")
             if not dst.exists(): shutil.copytree(s_, dst, symlinks=False)
         E.safe_write(RUNS / "README_A_reuse.md", f"exec_A 复制自 {V['reuseA']}（已核对执行模型、档位、包装、任务、优化器一致），未重新调用。")
-    tasks = E.load_tasks([x for x in a.tasks.split(",") if x])
+    ids = [x for x in a.tasks.split(",") if x]
+    all_tasks = E.load_tasks()
+    tasks = [t for t in all_tasks if not ids or t["id"] in ids]
     def run_all(jobs, label):
         errs = []
         with ThreadPoolExecutor(a.workers) as ex:
@@ -172,7 +177,7 @@ def main():
     if a.phase in ("optimize", "all"): errs += run_all([(opt_B, t) for t in tasks], "optimize")
     if a.phase in ("execute", "all"): errs += run_all([(exec_cond, t, c) for t in tasks for c in ("A", "B", "I")], "execute")
     if a.phase in ("judge", "all"): errs += run_all([(judge, t, p) for t in tasks for p in PAIRS], "judge")
-    if a.phase in ("aggregate", "all"): aggregate(tasks)
+    if a.phase in ("aggregate", "all"): aggregate(all_tasks)
     if errs: print("ERRORS:", len(errs)); sys.exit(1)
 
 if __name__ == "__main__": main()
