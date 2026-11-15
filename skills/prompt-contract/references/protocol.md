@@ -1,6 +1,6 @@
 # 提示词质量协议（OpenAI / Anthropic 通用）
 
-> 2026-09-12 版。通用方法适用于两家模型；§1 的模型表是一种常见分工，不是配置，实施前按官方现行页核验。
+> 2026-11-15 版。通用方法适用于两家模型；§1 的模型表是一种常见起点，不是配置，实施前按官方现行页核验。档位名跨模型不等价，从 Fable 5.1 / Opus 5 / GPT-5.6 迁来时必须重扫，不能把旧扫描结果直接当现行设置。
 
 ## 1. 官方核验与模型角色路由表
 
@@ -12,12 +12,13 @@
 
 | 角色层 | 模型 id | 建议 effort | 可达 harness |
 |---|---|---|---|
-| 决策层（主对话：决策、综合、验证） | `claude-fable-5-1` | `high`（官方默认与推荐起点） | Claude Code |
-| 决策层 | `gpt-6-astra` | 见官方页（不支持 `none`；迁移指引从 `low` 以上起） | Codex |
-| 执行层（检索、提取、批量核对） | `gpt-5.6-sol` | `low`–`medium` | Codex；Claude Code 经 codex 插件 |
-| 执行层 | `claude-opus-5` / `claude-sonnet-5` | `low`–`medium` | Claude Code（Agent 工具 `model` 参数，或 `.claude/agents/*.md` 的 `model` + `effort`） |
+| 决策层（多数知识/编码工作的常见起点） | `claude-opus-5-5` | `medium`（官方默认；官方建议多数团队先从这里起步） | Claude Code |
+| 决策层（用户已选 Fable，或 Opus 5.5 在更高 effort 上的评测仍不够） | `claude-fable-5-2` | `high`（官方默认） | Claude Code |
+| 决策层（Codex 侧最吃重的工作） | `gpt-6-astra` | 见官方页（不支持 `none`；从旧档的 `none` / `minimal` 迁过来时，官方建议先从 `low` 比起） | Codex |
+| 执行层（检索、提取、批量核对） | `gpt-6.1-sol` 或 `gpt-6.1-terra` | `low`–`medium`（Terra 支持 `none`；官方模型页上 Terra 的默认 effort 为 `medium`，实施前复核。6.1 Sol 不支持 `none`。带工具调用须用 Responses API） | Codex；Claude Code 经 codex 插件 |
+| 执行层 | `claude-opus-5-5` | `low`–`medium` | Claude Code（Agent 工具 `model` 参数，或 `.claude/agents/*.md` 的 `model` + `effort`） |
 
-档位名跨模型不等价；执行层升档须有评测收益。模型症状级处方见本目录 `model-notes/` 下对应模型笔记，只读相关部分。
+档位名跨模型不等价；执行层升档须有评测收益。官方产品建议是：多数团队先用 Opus 5.5，仅在更高 effort 的评测仍不够时再升到 Fable 5.2。模型症状级处方见本目录 `model-notes/` 下对应模型笔记，只读相关部分。本仓库没有作者在 Fable 5.2 / Opus 5.5 / GPT-6.1 上的 A/B 数字，上表不是评测结论。
 
 ## 2. 通用要求
 
@@ -50,5 +51,6 @@
 ## 5. 按需参考
 
 - 审查与瘦身 skill / 全局指令的方法：`skill-slimming.md`。
-- 各模型在「任务契约」优化器上的实测行为差异与专版改写方向：`model-behavior-matrix.md`。
-- 官方依据：[Rethinking skills and prompts for GPT-6 Astra（2026-09-11）](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra)、[Using GPT-6 Astra](https://developers.openai.com/api/docs/guides/latest-model)、[Prompting Claude Fable 5.1](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1)。
+- 各模型在「任务契约」优化器上的实测行为差异与专版改写方向：`model-behavior-matrix.md`（表中数字为 2026-09 作者报告；Fable 5.2 / Opus 5.5 / GPT-6.1 尚无作者 A/B）。
+- 现行官方依据：[Prompting Claude Fable 5.2](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-2)、[Prompting Claude Opus 5.5](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5)、[Using GPT-6](https://developers.openai.com/api/docs/guides/latest-model)。
+- 历史对照（2026-09 所用）：[Rethinking skills and prompts for GPT-6 Astra（2026-09-11）](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra)、[Prompting Claude Fable 5.1](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1)。当时的 Astra 指南与现行《Using GPT-6》共用同一 latest-model 地址，消化笔记见 `model-notes/gpt-6-astra.md`。

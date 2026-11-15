@@ -1,18 +1,18 @@
 # prompt-contract-kit
 
-> 把随手写的任务改写成「任务契约」再交给模型执行——附一套 20 题盲配对评测 harness，以及作者在 GPT-5.6 / GPT-6 / DeepSeek / Kimi 上跑出的结果。**先说结论：在开着推理的前沿模型上，这类优化器的边际价值有限；在作者的任务集上最一致的效果是「较少加入材料里没有的内容」，代价是回答更保守。** 这是一个开源的可选护栏与评测工具，不是「让 AI 更聪明」的秘方。
+> 把随手写的任务改写成「任务契约」再交给模型执行——附一套 20 题盲配对评测 harness，以及作者 2026-09 在当时的 GPT-5.6 / GPT-6 / DeepSeek / Kimi 上跑出的**历史对照**结果。那些执行环境已不是 2026-11 的默认现行一代，数字不能代表 Fable 5.2 / Opus 5.5 / GPT-6.1。**先说结论：在开着推理的前沿模型上，这类优化器的边际价值有限；在作者的任务集上最一致的效果是「较少加入材料里没有的内容」，代价是回答更保守。** 作者判断：模型越能直接理解自然语言指令，这类改写的额外收益可能越小——这是对趋势的判断，不是新模型上的实测。这是一个开源的可选护栏与评测工具，不是「让 AI 更聪明」的秘方。
 >
-> *A task-contract prompt optimizer for frontier models, with a 20-task blind pairwise eval harness and the author's measured results across GPT-5.6, GPT-6, DeepSeek and Kimi. Headline: with reasoning on, gains are marginal; the most consistent effect on this task set is less fabrication, at the cost of more conservative answers. Chinese-first. Unofficial; not affiliated with OpenAI or Anthropic.*
+> *A task-contract prompt optimizer for agents, with a 20-task blind pairwise eval harness and the author's September 2026 results on then-current GPT-5.6, GPT-6, DeepSeek and Kimi models—kept as a historical baseline, not as scores for today's default models. Headline: with reasoning on, gains are marginal; the most consistent effect on that task set is less fabrication, at the cost of more conservative answers. The author expects this kind of optimizer to help even less as models get better at following ordinary instructions; that is a judgment, not a new measurement. Chinese-first. Unofficial; not affiliated with OpenAI or Anthropic.*
 
 ## 里面有什么
 
 | 目录 | 内容 | 给谁 |
 |---|---|---|
-| `skills/prompt-contract/` | 一个 agent skill（Claude Code / Codex 通用格式）：写、审、瘦身提示词与 agent 任务说明时的协议，附 Fable 5.1 / GPT-6 Astra / GPT-5.6 三份模型笔记（作者整理与改编，官方原文见各篇链接） | 用 Claude Code / Codex 的人 |
+| `skills/prompt-contract/` | 一个 agent skill（Claude Code / Codex 通用格式）：写、审、瘦身提示词与 agent 任务说明时的协议，附 Fable 5.2 / Opus 5.5 / GPT-6.1 现行模型笔记，以及 2026-09 的 Fable 5.1 / GPT-6 Astra / GPT-5.6 笔记（保留作迁移对照；均为作者整理与改编，官方原文见各篇链接） | 用 Claude Code / Codex 的人 |
 | `optimizers/` | 两份纯文本优化器（两步式、一步式）+ 一份评测对照组文本 + 每个模型、每个档位的实测胜负表与装法 | 用 ChatGPT / Kimi / DeepSeek 网页版的人 |
 | `eval/` | A/B 盲配对评测 harness：两步式、一步式、换判官重判、网页端贴回判官、人工盲评表；预注册模板 | 想自己测一遍再决定用不用的人 |
 
-## 三个实测观察（均为**作者报告**：20 题自编任务、单次运行、模型判官；公开包不含原始输出，无法独立复算。细节与口径见 `optimizers/README.md`、`skills/prompt-contract/references/model-behavior-matrix.md`）
+## 三个历史观察（均为 **2026-09 作者报告**，当时的执行环境；20 题自编任务、单次运行、模型判官；公开包不含原始输出，无法独立复算。细节与口径见 `optimizers/README.md`、`skills/prompt-contract/references/model-behavior-matrix.md`。GPT-5.6 等已不是 2026-11 的默认现行一代；这些数字尚未在 Fable 5.2 / Opus 5.5 / GPT-6.1 上重跑，不能当成新模型的成绩。）
 
 1. **GPT-5.6 不开推理时，优化后更差。** effort=none（API 侧，网页端 Instant 的等价性未验证）下 7 胜 1 平 12 负——契约里列出的输出项被照单全做，回答更长、更偏离原任务范围。low / medium 档下 13-1-6 / 12-1-7。
 2. **在这组任务上 GPT-6 用不上两步式。** GPT-6 Astra 上 3-0-17：原始回答已经简洁有结构，压短规则被执行过头。
@@ -38,4 +38,4 @@ python3 run_eval.py --variant sol_medium --conds A,B --pairs AB --workers 2
 - 评测任务示例为虚构；原始 20 题任务与全部模型输出不随库发布（含个人材料）。
 
 ## 状态
-2026-09-18 首版。欢迎按 `eval/README.md` 的预注册表提交你在其他模型上的 A/B 结果。
+2026-11-15 更新（0.2.0）：按现行官方指南补了 Fable 5.2、Opus 5.5、GPT-6.1 家族的模型笔记与路由表。2026-09 那批 20 题数字作为历史对照原样保留，未在新模型上重跑，也不把它们写成现行模型的成绩。现行价值主要在任务契约的写法和按官方指南路由，不在「新模型上测过变强」。2026-09-18 首版。欢迎按 `eval/README.md` 的预注册表提交你在其他模型上的 A/B 结果。

@@ -1,6 +1,18 @@
 ---
 name: prompt-contract
-description: "Write, review, or slim prompts, skills, and agent task briefs as task contracts (goal, success criteria, constraints, evidence, stop rules); route to per-model notes for Claude Fable 5.1, GPT-6 Astra, GPT-5.6. Use when asked to draft or audit a prompt, SKILL.md, CLAUDE.md/AGENTS.md entry, or subagent brief. Not for executing the task itself."
+version: 0.2.0
+summary: "把提示词、skill 与子代理任务说明写成任务契约（目标、验收、约束、证据、停止条件），并按需路由到现行模型笔记。"
+description: "Write, review, or slim prompts, skills, and agent task briefs as task contracts (goal, success criteria, constraints, evidence, stop rules); route to per-model notes for Claude Fable 5.2, Claude Opus 5.5, the GPT-6.1 family, plus dated notes for Fable 5.1, GPT-6 Astra, and GPT-5.6. Use when asked to draft or audit a prompt, SKILL.md, CLAUDE.md/AGENTS.md entry, or subagent brief. Not for executing the task itself."
+tags:
+  - prompts
+  - skills
+  - agents
+  - task-contract
+keywords:
+  - task contract
+  - prompt engineering
+  - SKILL.md
+docs_url: https://github.com/zkl202310-code/prompt-contract-kit
 ---
 
 # prompt-contract
@@ -12,7 +24,7 @@ description: "Write, review, or slim prompts, skills, and agent task briefs as t
 |---|---|
 | 写新提示词 / 子代理任务说明 | `references/protocol.md` §2、§4 |
 | 审查或瘦身已有 skill / 全局指令 | `references/protocol.md` §3 + `references/skill-slimming.md` |
-| 目标模型是 Fable 5.1 / GPT-6 Astra / GPT-5.6，且出现具体症状 | `references/model-notes/<model>.md` 的对应条目 |
+| 目标模型是 Fable 5.2 / Opus 5.5 / GPT-6.1 家族，或仍在用 Fable 5.1 / GPT-6 Astra / GPT-5.6，且出现具体症状 | `references/model-notes/<model>.md` 的对应条目 |
 | 想给网页版模型套「任务契约」优化器，或评估它值不值 | `references/model-behavior-matrix.md`；优化器文本与装法在仓库根目录 `optimizers/`（只复制本 skill 目录时不随附） |
 
 ## 硬规则（少数，真的不变）
